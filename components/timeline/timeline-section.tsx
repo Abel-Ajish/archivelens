@@ -1,0 +1,251 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ArchiveSummary, Capture } from "@/lib/wayback/types";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { StateBlock } from "@/components/ui/state-block";
+import { YearStrip, type YearDensity } from "./year-strip";
+import { CaptureList } from "./capture-list";
+import { formatDate, formatYearMonth } from "@/lib/wayback/utils";
+
+interface TimelineSectionProps {
+  url: string;
+  showMetadata?: boolean;
+  yearFilter?: boolean;
+  preview?: boolean;
+  onCaptureSelect?: (capture: Capture) => void;
+}
+
+type Status =
+  | { kind: "loading" }
+  | { kind: "error"; message: string }
+  | { kind: "empty" }
+  | { kind: "ready"; summary: ArchiveSummary; years: YearDensity[] };
+
+export function TimelineSection({
+  url,
+  showMetadata = true,
+  yearFilter = false,
+  preview = false,
+  onCaptureSelect,
+}: TimelineSectionProps) {
+  const [status, setStatus] = useState<Status>({ kind: "loading" });
+  const [selectedMonth, setSelectedMonth] = useState<string | undefined>();
+  const [captures, setCaptures] = useState<Capture[]>([]);
+  const [capturesLoading, setCapturesLoading] = useState(false);
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus({ kind: "loading" });
+    setSelectedMonth(undefined);
+    setCaptures([]);
+
+    async function load() {
+      const [summaryRes, timelineRes] = await Promise.all([
+        fetch(`/api/wayback/summary?url=${encodeURIComponent(url)}`),
+        fetch(`/api/wayback/timeline?url=${encodeURIComponent(url)}`),
+      ]);
+      if (cancelled) return;
+
+      if (summaryRes.status === 400) {
+        setStatus({
+          kind: "error",
+          message: "That doesn't look like a valid website address.",
+        });
+        return;
+      }
+      if (summaryRes.status === 404) {
+        setStatus({ kind: "empty" });
+        return;
+      }
+      if (!summaryRes.ok || !timelineRes.ok) {
+        setStatus({ kind: "error", message: "unreachable" });
+        return;
+      }
+
+      const summary = (await summaryRes.json()) as ArchiveSummary;
+      const timeline = (await timelineRes.json()) as { months: string[] };
+
+      const byYear = new Map<number, string[]>();
+      for (const month of timeline.months) {
+        const year = Number(month.slice(0, 4));
+        const list = byYear.get(year) ?? [];
+        list.push(month);
+        byYear.set(year, list);
+      }
+      const years: YearDensity[] = [...byYear.entries()]
+        .map(([year, months]) => ({ year, months }))
+        .sort((a, b) => a.year - b.year);
+
+      setStatus({ kind: "ready", summary, years });
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [url, reloadKey]);
+
+  const loadCaptures = useCallback(
+    async (month: string) => {
+      setCapturesLoading(true);
+      setSelectedMonth(month);
+      try {
+        const res = await fetch(
+          `/api/wayback/captures?url=${encodeURIComponent(url)}&from=${month}&to=${month}`,
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { captures: Capture[] };
+          setCaptures(data.captures);
+        } else {
+          setCaptures([]);
+        }
+      } catch {
+        setCaptures([]);
+      } finally {
+        setCapturesLoading(false);
+      }
+    },
+    [url],
+  );
+
+  const visibleYears = useMemo(() => {
+    if (status.kind !== "ready" || filterYear === "all") {
+      return status.kind === "ready" ? status.years : [];
+    }
+    return status.years.filter((y) => String(y.year) === filterYear);
+  }, [status, filterYear]);
+
+  if (status.kind === "loading") {
+    return (
+      <div className="flex flex-col items-center gap-4 py-20">
+        <LoadingIndicator label="Searching the archive…" />
+        <p className="text-sm text-ink-faint">Looking through historical captures</p>
+      </div>
+    );
+  }
+
+  if (status.kind === "error") {
+    const invalid = status.message !== "unreachable";
+    return (
+      <StateBlock
+        title={invalid ? "That doesn't look like a valid website address." : "The archive couldn't be reached."}
+        actionLabel={invalid ? "Try again" : "Retry"}
+        actionHref={invalid ? "/" : undefined}
+        onAction={invalid ? undefined : () => setReloadKey((k) => k + 1)}
+      >
+        {invalid
+          ? "Check the address and try again."
+          : "Please try again in a moment."}
+      </StateBlock>
+    );
+  }
+
+  if (status.kind === "empty") {
+    return (
+      <StateBlock
+        title="No archived captures found."
+        actionLabel="Search another website"
+        actionHref="/"
+      >
+        The Internet Archive doesn&apos;t appear to have a snapshot for this
+        address.
+      </StateBlock>
+    );
+  }
+
+  const { summary, years } = status;
+
+  return (
+    <div className="flex flex-col gap-10">
+      {showMetadata && (
+        <dl className="flex flex-wrap gap-x-12 gap-y-4">
+          <div>
+            <dt className="text-xs tracking-wide text-ink-faint uppercase">First captured</dt>
+            <dd className="mt-1 text-sm text-ink">
+              {summary.firstCapture ? formatDate(summary.firstCapture) : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs tracking-wide text-ink-faint uppercase">Last captured</dt>
+            <dd className="mt-1 text-sm text-ink">
+              {summary.lastCapture ? formatDate(summary.lastCapture) : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs tracking-wide text-ink-faint uppercase">Total captures</dt>
+            <dd className="mt-1 text-sm text-ink tabular-nums">
+              {summary.totalCaptures !== null
+                ? `~${summary.totalCaptures.toLocaleString()}`
+                : "—"}
+            </dd>
+          </div>
+        </dl>
+      )}
+
+      {yearFilter && years.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label htmlFor="year-filter" className="text-sm text-ink-muted">
+            Filter by year
+          </label>
+          <select
+            id="year-filter"
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="rounded-lg border border-warmline bg-card px-3 py-2 text-sm text-ink shadow-whisper focus:border-sienna focus:outline-none"
+          >
+            <option value="all">All years</option>
+            {years.map((y) => (
+              <option key={y.year} value={String(y.year)}>
+                {y.year}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {years.length > 0 ? (
+        <YearStrip
+          years={visibleYears}
+          selectedMonth={selectedMonth}
+          onSelect={(month) => loadCaptures(month)}
+        />
+      ) : (
+        <p className="py-8 text-center text-sm text-ink-muted">
+          No capture data available.
+        </p>
+      )}
+
+      {selectedMonth && (
+        <section
+          aria-label={`Captures for ${formatYearMonth(selectedMonth)}`}
+          className="rounded-xl border border-warmline/60 bg-card p-2 shadow-whisper"
+        >
+          <h3 className="px-4 pt-3 pb-1 font-serif text-lg text-ink">
+            {formatYearMonth(selectedMonth)}
+          </h3>
+          {capturesLoading ? (
+            <div className="px-4 py-6">
+              <LoadingIndicator label="Loading captures…" />
+            </div>
+          ) : (
+            <CaptureList
+              url={url}
+              captures={captures}
+              onSelect={onCaptureSelect}
+              preview={preview}
+            />
+          )}
+        </section>
+      )}
+
+      {years.length > 0 && !selectedMonth && (
+        <p className="text-center text-sm text-ink-faint">
+          Select a point on the timeline to view its captures.
+        </p>
+      )}
+    </div>
+  );
+}
