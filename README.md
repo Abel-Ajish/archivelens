@@ -39,13 +39,30 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Archive providers
 
-ArchiveLens queries several web archives and merges their captures. If one
-archive is unreachable, it falls back to the others:
+ArchiveLens queries many web archives and merges their captures. Primary
+providers are queried first; national archives are used as fallback when
+primary providers are unreachable:
 
-- **Internet Archive — Wayback Machine** (`web.archive.org`) — the largest
-  and longest-running web archive.
-- **Arquivo.pt** (`arquivo.pt`) — the Portuguese web archive.
-- **Common Crawl** (`index.commoncrawl.org`) — a corpus of web crawl data.
+- **Internet Archive — Wayback Machine** (`web.archive.org`)
+- **Arquivo.pt** (`arquivo.pt`) — the Portuguese web archive
+- **Common Crawl** (`index.commoncrawl.org`) — a corpus of web crawl data
+- **Icelandic Web Archive** (`vefsafn.is`)
+- **UK Web Archive** (`webarchive.org.uk`)
+- **Stanford Web Archive** (`swap.stanford.edu`)
+- **National Library of Australia** (`webarchive.nla.gov.au`)
+- **National Library of New Zealand** (`webarchive.natlib.govt.nz`)
+- **Croatian Web Archive** (`haw.nsk.hr`)
+- **Czech Web Archive** (`webarchiv.cz`)
+- **Estonian Web Archive** (`veebiarhiiv.digar.ee`)
+- **Japanese Web Archive / WARP** (`warp.da.ndl.go.jp`)
+- **Bibliotheca Alexandrina** (`web.archive.bibalex.org`)
+- **Archive-It** (`wayback.archive-it.org`)
+- Plus 80+ national web archives worldwide (Denmark, Norway, Sweden, Finland,
+  Germany, France, Spain, Italy, Belgium, Switzerland, Austria, Ireland,
+  Greece, Turkey, Russia, China, Korea, India, Canada, Mexico, Brazil,
+  Argentina, Chile, Colombia, Peru, Venezuela, Ecuador, Bolivia, Paraguay,
+  Uruguay, Costa Rica, Panama, Cuba, Dominican Republic, Puerto Rico, Jamaica,
+  Trinidad and Tobago, Barbados, Bahamas, Bermuda, and more)
 
 ## Structure
 

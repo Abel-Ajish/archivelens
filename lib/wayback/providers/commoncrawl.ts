@@ -1,4 +1,5 @@
 import type { ArchiveProvider } from "./types";
+import { cached, CACHE_TTL } from "../cache";
 
 export const commonCrawlProvider: ArchiveProvider = {
   id: "commoncrawl",
@@ -6,12 +7,19 @@ export const commonCrawlProvider: ArchiveProvider = {
   supportsPreview: false,
   replayUrl: () => "https://commoncrawl.org/",
   async fetchCaptures(url, opts = {}) {
-    const indexRes = await fetch(
-      "https://index.commoncrawl.org/collinfo.json",
-      { signal: AbortSignal.timeout(15000) },
+    const indexes = await cached<{ id: string }[]>(
+      "collinfo",
+      {},
+      CACHE_TTL.collinfo,
+      async () => {
+        const res = await fetch(
+          "https://index.commoncrawl.org/collinfo.json",
+          { signal: AbortSignal.timeout(15000) },
+        );
+        if (!res.ok) throw new Error("Common Crawl collinfo error");
+        return res.json();
+      },
     );
-    if (!indexRes.ok) throw new Error("Common Crawl collinfo error");
-    const indexes = (await indexRes.json()) as { id: string }[];
     const latest = indexes[0]?.id;
     if (!latest) throw new Error("No Common Crawl indexes available");
 

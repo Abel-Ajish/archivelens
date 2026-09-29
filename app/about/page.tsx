@@ -108,6 +108,21 @@ export default function AboutPage() {
             </a>{" "}
             — a corpus of web crawl data
           </li>
+          <li className="text-sm text-ink-muted">
+            <a
+              href="https://vefsafn.is"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="u-link text-ink"
+            >
+              Icelandic Web Archive
+            </a>
+          </li>
+          <li className="text-sm text-ink-muted">
+            Plus 90+ national web archives worldwide — UK, Stanford, Australia,
+            New Zealand, Croatia, Czech Republic, Estonia, Japan, Bibliotheca
+            Alexandrina, Archive-It, and many more.
+          </li>
         </ul>
         <p className="mt-4 text-sm leading-relaxed text-ink-muted">
           ArchiveLens does not host any snapshots itself — it fetches capture
