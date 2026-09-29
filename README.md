@@ -29,13 +29,23 @@ Open [http://localhost:3000](http://localhost:3000).
 ## How it works
 
 1. Enter a website URL.
-2. ArchiveLens queries the Internet Archive's CDX API (server-side, via
+2. ArchiveLens queries multiple web archives (server-side, via
    `/api/wayback/*` route handlers) for capture metadata.
-3. Captures are presented on an interactive timeline, grouped by year and
-   month.
+3. Captures are merged and presented on an interactive timeline, grouped by
+   year and month.
 4. Select a capture to preview the archived page, served through the
-   Internet Archive's own archived URL (`web.archive.org/web/<timestamp>id_/`).
+   archive's own replay URL.
 5. Compare any two snapshots side by side with a draggable divider.
+
+## Archive providers
+
+ArchiveLens queries several web archives and merges their captures. If one
+archive is unreachable, it falls back to the others:
+
+- **Internet Archive — Wayback Machine** (`web.archive.org`) — the largest
+  and longest-running web archive.
+- **Arquivo.pt** (`arquivo.pt`) — the Portuguese web archive.
+- **Common Crawl** (`index.commoncrawl.org`) — a corpus of web crawl data.
 
 ## Structure
 
@@ -47,19 +57,20 @@ app/
   snapshot/[...rest]     Snapshot viewer
   compare/               Side-by-side comparison
   about/                 About page
-  api/wayback/           CDX API proxy routes (summary, timeline, captures)
+  api/wayback/           Archive API proxy routes (summary, timeline, captures)
 components/
   layout/                Header, footer
   navigation/            Site header with mobile nav
-  ui/                    Buttons, inputs, states, search form
+  ui/                    Buttons, inputs, states, search form, provider tag
   timeline/              Year strip, capture list, timeline section
   snapshot/              Snapshot viewer
   compare/               Comparison view
-lib/wayback/             Wayback integration (types, client, utils, server)
+lib/wayback/             Archive integration (types, utils, server)
+  providers/             Wayback, Arquivo.pt, Common Crawl + merge/fallback
 ```
 
 ## Notes
 
-- All archived content is provided by the Internet Archive. ArchiveLens does
-  not host snapshots itself.
-- No API credentials are required; the CDX API is accessed server-side.
+- All archived content is provided by the web archives listed above.
+  ArchiveLens does not host snapshots itself.
+- No API credentials are required; the archive APIs are accessed server-side.

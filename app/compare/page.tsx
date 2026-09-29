@@ -4,11 +4,11 @@ import { CompareView } from "@/components/compare/compare-view";
 export const metadata: Metadata = { title: "Compare" };
 
 interface PageProps {
-  searchParams: Promise<{ url?: string; a?: string; b?: string }>;
+  searchParams: Promise<{ url?: string; a?: string; b?: string; provider?: string }>;
 }
 
 export default async function ComparePage({ searchParams }: PageProps) {
-  const { url, a, b } = await searchParams;
+  const { url, a, b, provider } = await searchParams;
   const target = url ?? "apple.com";
 
   return (
@@ -27,6 +27,7 @@ export default async function ComparePage({ searchParams }: PageProps) {
         url={target}
         initialYearA={a}
         initialYearB={b}
+        initialProvider={provider}
       />
     </div>
   );

@@ -71,19 +71,48 @@ export default function AboutPage() {
       <section className="mt-8 rounded-xl border border-warmline/60 bg-card p-8 shadow-whisper">
         <h2 className="font-serif text-xl text-ink">A note on sources</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-          All archived content is provided by the Internet Archive&apos;s
-          Wayback Machine. ArchiveLens does not host any snapshots itself — it
-          fetches capture metadata and links to the archived copies served by
-          the Internet Archive.
+          ArchiveLens draws on several web archives. If one archive is
+          unreachable, it automatically falls back to the others:
         </p>
-        <a
-          href="https://archive.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="u-link mt-4 inline-block text-sm text-sienna"
-        >
-          Visit the Internet Archive ↗
-        </a>
+        <ul className="mt-4 flex flex-col gap-2">
+          <li className="text-sm text-ink-muted">
+            <a
+              href="https://archive.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="u-link text-ink"
+            >
+              Internet Archive — Wayback Machine
+            </a>{" "}
+            — the largest and longest-running web archive
+          </li>
+          <li className="text-sm text-ink-muted">
+            <a
+              href="https://arquivo.pt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="u-link text-ink"
+            >
+              Arquivo.pt
+            </a>{" "}
+            — the Portuguese web archive
+          </li>
+          <li className="text-sm text-ink-muted">
+            <a
+              href="https://commoncrawl.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="u-link text-ink"
+            >
+              Common Crawl
+            </a>{" "}
+            — a corpus of web crawl data
+          </li>
+        </ul>
+        <p className="mt-4 text-sm leading-relaxed text-ink-muted">
+          ArchiveLens does not host any snapshots itself — it fetches capture
+          metadata and links to the archived copies served by these archives.
+        </p>
       </section>
     </div>
   );

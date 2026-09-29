@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchTimeline } from "@/lib/wayback/client";
+import { fetchFromAllProviders, mergeCaptures } from "@/lib/wayback/providers";
 import { isValidUrl, normalizeUrl } from "@/lib/wayback/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +12,22 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-  try {
-    const timeline = await fetchTimeline(normalizeUrl(raw));
-    return NextResponse.json(timeline);
-  } catch {
+  const url = normalizeUrl(raw);
+  const results = await fetchFromAllProviders(url, { limit: 10000 });
+  const responded = results.filter((r) => !r.error);
+  if (responded.length === 0) {
     return NextResponse.json(
       { error: "unreachable", message: "The archive couldn't be reached." },
       { status: 502 },
     );
   }
+  const merged = mergeCaptures(results);
+  const months = [
+    ...new Set(merged.map((c) => c.timestamp.slice(0, 6))),
+  ].sort();
+  return NextResponse.json({
+    url,
+    months,
+    providers: responded.map((r) => r.provider.id),
+  });
 }

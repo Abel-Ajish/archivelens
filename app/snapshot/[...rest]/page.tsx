@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/wayback/utils";
 
 interface PageProps {
   params: Promise<{ rest: string[] }>;
+  searchParams: Promise<{ provider?: string }>;
 }
 
 export async function generateMetadata({
@@ -18,8 +19,12 @@ export async function generateMetadata({
   return { title: `${rest.slice(0, -1).join("/")} — ${formatDate(timestamp)}` };
 }
 
-export default async function SnapshotPage({ params }: PageProps) {
+export default async function SnapshotPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { rest } = await params;
+  const { provider } = await searchParams;
   const timestamp = rest[rest.length - 1] ?? "";
   const url = rest.slice(0, -1).join("/");
 
@@ -27,7 +32,7 @@ export default async function SnapshotPage({ params }: PageProps) {
     notFound();
   }
 
-  const available = await verifyCapture(url, timestamp);
+  const available = await verifyCapture(url, timestamp, provider);
   if (available === false) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-14 sm:px-10">
@@ -72,7 +77,11 @@ export default async function SnapshotPage({ params }: PageProps) {
         </p>
       </header>
 
-      <SnapshotViewer url={url} timestamp={timestamp} />
+      <SnapshotViewer
+        url={url}
+        timestamp={timestamp}
+        provider={provider ?? "wayback"}
+      />
     </div>
   );
 }

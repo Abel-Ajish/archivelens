@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Capture } from "@/lib/wayback/types";
 import { formatDate, formatTime } from "@/lib/wayback/utils";
+import { ProviderTag } from "@/components/ui/provider-tag";
 
 interface CaptureListProps {
   url: string;
@@ -49,11 +50,9 @@ function CaptureRow({
           </span>
         </button>
         <span className="flex items-center gap-3">
-          <span className="text-xs text-ink-faint tabular-nums">
-            {capture.timestamp}
-          </span>
+          <ProviderTag providerId={capture.provider} />
           <Link
-            href={`/snapshot/${url}/${capture.timestamp}`}
+            href={`/snapshot/${url}/${capture.timestamp}?provider=${capture.provider}`}
             className="u-link text-sm text-sienna-deep"
           >
             View snapshot →

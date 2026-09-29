@@ -6,23 +6,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ArchiveSummary, Capture } from "@/lib/wayback/types";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { getProvider } from "@/lib/wayback/providers";
 import {
   formatDate,
   formatYearMonth,
-  snapshotOpenUrl,
-  snapshotPreviewUrl,
 } from "@/lib/wayback/utils";
 
 interface CompareViewProps {
   url: string;
   initialYearA?: string;
   initialYearB?: string;
+  initialProvider?: string;
 }
 
 export function CompareView({
   url,
   initialYearA,
   initialYearB,
+  initialProvider,
 }: CompareViewProps) {
   const [summary, setSummary] = useState<ArchiveSummary | null>(null);
   const [captureA, setCaptureA] = useState<Capture | null>(null);
@@ -137,7 +138,7 @@ export function CompareView({
     const next = years[index + delta];
     if (next !== undefined) {
       router.push(
-        `/compare?url=${encodeURIComponent(url)}&a=${yearA}&b=${next}`,
+        `/compare?url=${encodeURIComponent(url)}&a=${yearA}&b=${next}&provider=${initialProvider ?? "wayback"}`,
       );
     }
   }
@@ -182,6 +183,11 @@ export function CompareView({
     );
   }
 
+  const providerA = getProvider(captureA?.provider ?? initialProvider ?? "wayback");
+  const providerB = getProvider(captureB?.provider ?? "wayback");
+  const urlA = captureA ? providerA.replayUrl(captureA.timestamp, url) : "#";
+  const urlB = captureB ? providerB.replayUrl(captureB.timestamp, url) : "#";
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -203,7 +209,7 @@ export function CompareView({
         </Button>
         {captureA && (
           <Link
-            href={`/snapshot/${url}/${captureA.timestamp}`}
+            href={`/snapshot/${url}/${captureA.timestamp}?provider=${captureA.provider}`}
             className="u-link ml-auto text-sm text-sienna-deep"
           >
             Open snapshot A ↗
@@ -211,7 +217,7 @@ export function CompareView({
         )}
         {captureB && (
           <a
-            href={snapshotOpenUrl(captureB.timestamp, url)}
+            href={urlB}
             target="_blank"
             rel="noopener noreferrer"
             className="u-link text-sm text-sienna-deep"
@@ -239,7 +245,7 @@ export function CompareView({
             </div>
             {captureA && (
               <iframe
-                src={snapshotPreviewUrl(captureA.timestamp, url)}
+                src={urlA}
                 title={`Snapshot A — ${url} ${formatDate(captureA.timestamp)}`}
                 className="h-[50vh] w-full border-0 bg-card sm:h-[60vh]"
                 style={{ pointerEvents: "none" }}
@@ -257,7 +263,7 @@ export function CompareView({
             </div>
             {captureB && (
               <iframe
-                src={snapshotPreviewUrl(captureB.timestamp, url)}
+                src={urlB}
                 title={`Snapshot B — ${url} ${formatDate(captureB.timestamp)}`}
                 className="h-[50vh] w-full border-0 bg-card sm:h-[60vh]"
                 style={{ pointerEvents: "none" }}
@@ -301,13 +307,13 @@ export function CompareView({
         {captureA && (
           <span>
             A — {formatDate(captureA.timestamp)} ·{" "}
-            {formatYearMonth(captureA.timestamp.slice(0, 6))}
+            {formatYearMonth(captureA.timestamp.slice(0, 6))} · {providerA.name}
           </span>
         )}
         {captureB && (
           <span>
             B — {formatDate(captureB.timestamp)} ·{" "}
-            {formatYearMonth(captureB.timestamp.slice(0, 6))}
+            {formatYearMonth(captureB.timestamp.slice(0, 6))} · {providerB.name}
           </span>
         )}
       </div>

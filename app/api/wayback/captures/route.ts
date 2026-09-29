@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchCaptures } from "@/lib/wayback/client";
+import { fetchFromAllProviders, mergeCaptures } from "@/lib/wayback/providers";
 import { isValidUrl, normalizeUrl } from "@/lib/wayback/utils";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +20,15 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-  try {
-    const captures = await fetchCaptures(normalizeUrl(raw), from, to);
-    return NextResponse.json({ captures });
-  } catch {
+  const url = normalizeUrl(raw);
+  const results = await fetchFromAllProviders(url, { from, to, limit: 5000 });
+  const responded = results.filter((r) => !r.error);
+  if (responded.length === 0) {
     return NextResponse.json(
       { error: "unreachable", message: "The archive couldn't be reached." },
       { status: 502 },
     );
   }
+  const captures = mergeCaptures(results);
+  return NextResponse.json({ captures });
 }

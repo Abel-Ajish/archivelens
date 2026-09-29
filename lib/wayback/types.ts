@@ -3,6 +3,7 @@ export interface Capture {
   original: string;
   statuscode: string;
   mimetype: string;
+  provider: string;
 }
 
 export interface ArchiveSummary {
@@ -11,19 +12,11 @@ export interface ArchiveSummary {
   lastCapture: string | null;
   totalCaptures: number | null;
   years: number[];
+  providers: string[];
 }
 
 export interface TimelineData {
   url: string;
   months: string[];
-}
-
-export class WaybackError extends Error {
-  constructor(
-    message: string,
-    public readonly kind: "invalid" | "unreachable" | "empty",
-  ) {
-    super(message);
-    this.name = "WaybackError";
-  }
+  providers: string[];
 }

@@ -6,6 +6,7 @@ import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { StateBlock } from "@/components/ui/state-block";
 import { YearStrip, type YearDensity } from "./year-strip";
 import { CaptureList } from "./capture-list";
+import { providers } from "@/lib/wayback/providers";
 import { formatDate, formatYearMonth } from "@/lib/wayback/utils";
 
 interface TimelineSectionProps {
@@ -182,6 +183,16 @@ export function TimelineSection({
                 : "—"}
             </dd>
           </div>
+          {summary.providers.length > 0 && (
+            <div>
+              <dt className="text-xs tracking-wide text-ink-faint uppercase">Sources</dt>
+              <dd className="mt-1 text-sm text-ink">
+                {summary.providers
+                  .map((id) => providers.find((p) => p.id === id)?.name ?? id)
+                  .join(", ")}
+              </dd>
+            </div>
+          )}
         </dl>
       )}
 

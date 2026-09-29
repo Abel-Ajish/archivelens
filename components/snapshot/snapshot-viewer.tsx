@@ -5,12 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { Capture } from "@/lib/wayback/types";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { getProvider } from "@/lib/wayback/providers";
 import {
   formatDate,
   formatTime,
   monthOf,
-  snapshotOpenUrl,
-  snapshotPreviewUrl,
 } from "@/lib/wayback/utils";
 
 function shiftMonth(month: string, delta: number): string {
@@ -25,9 +24,10 @@ function shiftMonth(month: string, delta: number): string {
 interface SnapshotViewerProps {
   url: string;
   timestamp: string;
+  provider: string;
 }
 
-export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
+export function SnapshotViewer({ url, timestamp, provider }: SnapshotViewerProps) {
   const [neighbors, setNeighbors] = useState<{
     prev?: Capture;
     next?: Capture;
@@ -77,13 +77,16 @@ export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
     loadNeighbors();
   }, [loadNeighbors]);
 
+  const currentProvider = getProvider(provider);
+  const snapshotUrl = currentProvider.replayUrl(timestamp, url);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         {neighbors.prev ? (
           <Button
             variant="secondary"
-            href={`/snapshot/${url}/${neighbors.prev.timestamp}`}
+            href={`/snapshot/${url}/${neighbors.prev.timestamp}?provider=${neighbors.prev.provider}`}
             ariaLabel="Previous snapshot"
           >
             ← Older
@@ -96,7 +99,7 @@ export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
         {neighbors.next ? (
           <Button
             variant="secondary"
-            href={`/snapshot/${url}/${neighbors.next.timestamp}`}
+            href={`/snapshot/${url}/${neighbors.next.timestamp}?provider=${neighbors.next.provider}`}
             ariaLabel="Next snapshot"
           >
             Newer →
@@ -108,13 +111,13 @@ export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
         )}
         <Button
           variant="secondary"
-          href={`/compare?url=${encodeURIComponent(url)}&a=${timestamp}&b=${neighbors.next?.timestamp ?? ""}`}
+          href={`/compare?url=${encodeURIComponent(url)}&a=${timestamp}&b=${neighbors.next?.timestamp ?? ""}&provider=${provider}`}
           disabled={!neighbors.next}
         >
           Compare
         </Button>
         <a
-          href={snapshotOpenUrl(timestamp, url)}
+          href={snapshotUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="u-link ml-auto text-sm text-sienna-deep"
@@ -131,7 +134,7 @@ export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
 
       <div className="snapshot-frame overflow-hidden rounded-xl border border-warmline/60">
         <iframe
-          src={snapshotPreviewUrl(timestamp, url)}
+          src={snapshotUrl}
           title={`Archived snapshot of ${url} from ${formatDate(timestamp)}`}
           className="h-[70vh] w-full border-0 bg-card"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -154,8 +157,8 @@ export function SnapshotViewer({ url, timestamp }: SnapshotViewerProps) {
           <dd className="mt-1 text-sm text-ink tabular-nums">{timestamp}</dd>
         </div>
         <div>
-          <dt className="text-xs tracking-wide text-ink-faint uppercase">Status</dt>
-          <dd className="mt-1 text-sm text-ink">Available</dd>
+          <dt className="text-xs tracking-wide text-ink-faint uppercase">Source</dt>
+          <dd className="mt-1 text-sm text-ink">{currentProvider.name}</dd>
         </div>
       </dl>
     </div>
