@@ -18,6 +18,21 @@ export function isValidUrl(input: string): boolean {
   return HOSTNAME_PATTERN.test(host);
 }
 
+export function getUrlValidationError(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return "Please enter a website address.";
+  if (/\s/.test(trimmed)) return "The address shouldn't contain spaces.";
+  const value = normalizeUrl(trimmed);
+  const host = value.split("/")[0];
+  if (!host.includes(".")) {
+    return "That doesn't look like a valid website address. Try something like example.com.";
+  }
+  if (!HOSTNAME_PATTERN.test(host)) {
+    return "That doesn't look like a valid website address. Check the domain and try again.";
+  }
+  return null;
+}
+
 export function yearOf(timestamp: string): number {
   return Number(timestamp.slice(0, 4));
 }
@@ -69,4 +84,37 @@ export function snapshotPreviewUrl(timestamp: string, url: string): string {
 
 export function snapshotOpenUrl(timestamp: string, url: string): string {
   return `https://web.archive.org/web/${timestamp}/${url}`;
+}
+
+export function exportCaptures(
+  captures: { timestamp: string; original: string; statuscode: string; mimetype: string; provider: string }[],
+  format: "json" | "csv",
+): void {
+  let content: string;
+  let mimeType: string;
+  let extension: string;
+
+  if (format === "json") {
+    content = JSON.stringify(captures, null, 2);
+    mimeType = "application/json";
+    extension = "json";
+  } else {
+    const header = "timestamp,original,statuscode,mimetype,provider";
+    const rows = captures.map((c) =>
+      [c.timestamp, c.original, c.statuscode, c.mimetype, c.provider]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    content = [header, ...rows].join("\n");
+    mimeType = "text/csv";
+    extension = "csv";
+  }
+
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `captures.${extension}`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

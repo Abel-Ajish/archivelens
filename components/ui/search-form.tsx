@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { isValidUrl, normalizeUrl } from "@/lib/wayback/utils";
+import { getUrlValidationError, normalizeUrl } from "@/lib/wayback/utils";
 import { Button } from "./button";
 import { SearchInput } from "./input";
+import { addRecentSearch } from "./recent-searches";
 
 interface SearchFormProps {
   initialValue?: string;
@@ -23,12 +24,15 @@ export function SearchForm({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!isValidUrl(value)) {
-      setError("That doesn't look like a valid website address.");
+    const validationError = getUrlValidationError(value);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setError(null);
-    router.push(`/archive/${normalizeUrl(value)}`);
+    const normalized = normalizeUrl(value);
+    addRecentSearch(normalized);
+    router.push(`/archive/${normalized}`);
   }
 
   return (

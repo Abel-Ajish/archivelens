@@ -1,4 +1,5 @@
 import type { ArchiveProvider, ProviderCapture, ProviderResult } from "./types";
+import { withRetry } from "../retry";
 import { waybackProvider } from "./wayback";
 import { arquivoProvider } from "./arquivo";
 import { commonCrawlProvider } from "./commoncrawl";
@@ -436,7 +437,10 @@ async function fetchProviders(
     const batchResults = await Promise.all(
       batch.map(async (provider) => {
         try {
-          const captures = await provider.fetchCaptures(url, opts);
+          const captures = await withRetry(
+            () => provider.fetchCaptures(url, opts),
+            provider.id,
+          );
           return { provider, captures };
         } catch (error) {
           return {

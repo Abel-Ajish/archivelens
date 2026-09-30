@@ -12,6 +12,7 @@ export interface ArchiveSummary {
   lastCapture: string | null;
   totalCaptures: number | null;
   years: number[];
+  yearCounts: Record<string, number>;
   providers: string[];
 }
 

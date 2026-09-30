@@ -7,7 +7,7 @@ import { StateBlock } from "@/components/ui/state-block";
 import { YearStrip, type YearDensity } from "./year-strip";
 import { CaptureList } from "./capture-list";
 import { providers } from "@/lib/wayback/providers";
-import { formatDate, formatYearMonth } from "@/lib/wayback/utils";
+import { exportCaptures, formatDate, formatYearMonth } from "@/lib/wayback/utils";
 
 interface TimelineSectionProps {
   url: string;
@@ -121,9 +121,33 @@ export function TimelineSection({
 
   if (status.kind === "loading") {
     return (
-      <div className="flex flex-col items-center gap-4 py-20">
-        <LoadingIndicator label="Searching the archive…" />
-        <p className="text-sm text-ink-faint">Looking through historical captures</p>
+      <div className="flex flex-col gap-10" aria-busy="true" aria-label="Loading archive data">
+        <div className="flex flex-wrap gap-x-12 gap-y-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div className="h-3 w-16 animate-pulse rounded bg-sand" />
+              <div className="h-4 w-20 animate-pulse rounded bg-sand" />
+            </div>
+          ))}
+        </div>
+        <div className="flex items-end gap-1">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-1 flex-col items-center gap-1"
+            >
+              <div
+                className="w-full animate-pulse rounded-t bg-sand"
+                style={{ height: `${20 + Math.random() * 60}px` }}
+              />
+              <div className="h-2 w-6 animate-pulse rounded bg-sand" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col items-center gap-4 py-8">
+          <LoadingIndicator label="Searching the archive…" />
+          <p className="text-sm text-ink-faint">Looking through historical captures</p>
+        </div>
       </div>
     );
   }
@@ -196,6 +220,38 @@ export function TimelineSection({
         </dl>
       )}
 
+      {showMetadata && summary.yearCounts && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs tracking-wide text-ink-faint uppercase">
+            Captures per year
+          </h3>
+          <div className="flex items-end gap-1" aria-label="Captures per year">
+            {years.map((y) => {
+              const count = summary.yearCounts[String(y.year)] ?? 0;
+              const maxCount = Math.max(
+                ...years.map((yy) => summary.yearCounts[String(yy.year)] ?? 0),
+              );
+              const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
+              return (
+                <div
+                  key={y.year}
+                  className="flex flex-1 flex-col items-center gap-1"
+                  title={`${y.year}: ${count} captures`}
+                >
+                  <div
+                    className="w-full rounded-t bg-sienna/60 transition-all hover:bg-sienna"
+                    style={{ height: `${Math.max(height, 4)}%`, minHeight: 4 }}
+                  />
+                  <span className="text-[10px] text-ink-faint tabular-nums">
+                    {String(y.year).slice(2)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {yearFilter && years.length > 0 && (
         <div className="flex items-center gap-3">
           <label htmlFor="year-filter" className="text-sm text-ink-muted">
@@ -234,9 +290,29 @@ export function TimelineSection({
           aria-label={`Captures for ${formatYearMonth(selectedMonth)}`}
           className="rounded-xl border border-warmline/60 bg-card p-2 shadow-whisper"
         >
-          <h3 className="px-4 pt-3 pb-1 font-serif text-lg text-ink">
-            {formatYearMonth(selectedMonth)}
-          </h3>
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <h3 className="font-serif text-lg text-ink">
+              {formatYearMonth(selectedMonth)}
+            </h3>
+            {captures.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => exportCaptures(captures, "json")}
+                  className="u-link text-xs text-sienna-deep"
+                >
+                  Export JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportCaptures(captures, "csv")}
+                  className="u-link text-xs text-sienna-deep"
+                >
+                  Export CSV
+                </button>
+              </div>
+            )}
+          </div>
           {capturesLoading ? (
             <div className="px-4 py-6">
               <LoadingIndicator label="Loading captures…" />

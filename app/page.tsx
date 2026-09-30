@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "@/components/ui/search-form";
+import { RecentSearches } from "@/components/ui/recent-searches";
 
 const EXAMPLES = ["apple.com", "nasa.gov", "wikipedia.org", "archive.org"];
 
@@ -40,6 +41,8 @@ export default function HomePage() {
             </a>
           ))}
         </div>
+
+        <RecentSearches />
       </section>
 
       <section className="border-t border-warmline/60 py-20">

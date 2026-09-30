@@ -11,6 +11,7 @@ interface SummaryData {
   lastCapture: string;
   totalCaptures: number;
   years: number[];
+  yearCounts: Record<string, number>;
   providers: string[];
 }
 
@@ -43,6 +44,11 @@ export async function GET(request: NextRequest) {
         const years = [
           ...new Set(timestamps.map((t) => Number(t.slice(0, 4)))),
         ].sort((a, b) => a - b);
+        const yearCounts: Record<string, number> = {};
+        for (const t of timestamps) {
+          const y = t.slice(0, 4);
+          yearCounts[y] = (yearCounts[y] ?? 0) + 1;
+        }
         return {
           status: "ok",
           data: {
@@ -51,6 +57,7 @@ export async function GET(request: NextRequest) {
             lastCapture: timestamps[timestamps.length - 1],
             totalCaptures: merged.length,
             years,
+            yearCounts,
             providers: responded.map((r) => r.provider.id),
           },
         };
