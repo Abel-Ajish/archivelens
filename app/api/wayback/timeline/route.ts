@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       { url },
       CACHE_TTL.timeline,
       async (): Promise<TimelineResult> => {
-        const results = await fetchFromAllProviders(url, { limit: 3000 });
+        const results = await fetchFromAllProviders(url, { limit: 2000 });
         const responded = results.filter((r) => !r.error);
         if (responded.length === 0) return { status: "unreachable" };
         const merged = mergeCaptures(results);

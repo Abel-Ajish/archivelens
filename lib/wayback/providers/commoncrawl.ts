@@ -28,7 +28,7 @@ export const commonCrawlProvider: ArchiveProvider = {
     const res = await fetch(
       `https://index.commoncrawl.org/${latest}-index?${params.toString()}`,
       {
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(5000),
         headers: { Accept: "application/json" },
       },
     );

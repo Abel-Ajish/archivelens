@@ -9,7 +9,7 @@ interface NationalArchiveConfig {
 }
 
 function createCdxProvider(config: NationalArchiveConfig): ArchiveProvider {
-  const timeout = config.timeoutMs ?? 5000;
+  const timeout = config.timeoutMs ?? 2000;
   return {
     id: config.id,
     name: config.name,
